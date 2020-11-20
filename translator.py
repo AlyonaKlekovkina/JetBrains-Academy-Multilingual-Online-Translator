@@ -2,24 +2,26 @@ import requests
 
 from bs4 import BeautifulSoup
 
-inp = input('Type "en" if you want to translate from French into English, or "fr" if you want to translate from English into French: \n')
+languages = {1: 'arabic', 2: 'german', 3: 'english', 4: 'spanish', 5: 'french', 6: 'hebrew', 7: 'japanese', 8: 'dutch', 9: 'polish', 10: 'portuguese', 11: 'romanian', 12: 'russian', 13: 'turkish'}
+
+lg_from = int(input("Hello, you're welcome to the translator. Translator supports:\n1. Arabic\n2. German\n3. English\n4. Spanish\n5. French\n6. Hebrew\n7. Japanese\n8. Dutch\n9. Polish\n10. Portuguese\n11. Romanian\n12. Russian\n13. Turkish\nType the number of your language:\n"))
+lg_to = int(input("Type the number of your language:\n"))
+
 word = input('Type the word you want to translate: \n')
 
-print('You chose "{}" as the language to translate "{}" to.'.format(inp, word))
 
-address = ''
-if inp == 'fr':
-    address = 'https://context.reverso.net/translation/english-french/{}'.format(word)
-elif inp =='en':
-    address = 'https://context.reverso.net/translation/french-english/{}'.format(word)
+def create_address(fr, t):
+    left = languages.get(fr)
+    right = languages.get(t)
+    address = 'https://context.reverso.net/translation/{}-{}/{}'.format(left, right, word)
+    return address
 
-url = address
+
+url = create_address(lg_from, lg_to)
+
 headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'}
 result = requests.get(url, headers=headers)
 
-if result:
-    print('200 OK')
-    print('\nContext examples:\n')
 
 soup = BeautifulSoup(result.content, 'html.parser')
 words = soup.find_all("a", {"class": "translation"}, {"lang": "fr"})
@@ -51,11 +53,11 @@ for i in range(len(list_of_sentences)):
     f.append(p)
 
 
-print("French Translations:")
+print("{} Translations:".format(languages.get(lg_to).capitalize()))
 for i in range(1, 6):
     print(list_of_words[i])
 
-print("\nFrench Examples:")
+print("\n{} Examples:".format(languages.get(lg_to).capitalize()))
 for i in range(6):
     for j in f[i]:
         print(j)
