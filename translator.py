@@ -21,6 +21,18 @@ def create_urls():
     return list_of_urls
 
 
+def check_urls():
+    urls = create_urls()
+    for i in urls:
+        headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/50.0.2661.102 Safari/537.36'}
+        result = requests.get(i, headers=headers)
+        if result:
+            continue
+        else:
+            return result.status_code
+    return True
+
+
 def get_lists_of_words_and_sentences():
     the_urls = create_urls()
     multi_lists_words = []
@@ -48,35 +60,48 @@ def get_lists_of_words_and_sentences():
     return multi_lists_words, multi_lists_sentences
 
 
-name_file = open('{}.txt'.format(word), 'w', encoding='utf-8')
-the_list_of_all_urls = create_urls()
-words, sentences = get_lists_of_words_and_sentences()
-languages.remove(lg_from)
-n = len(the_list_of_all_urls)
+def write_to_file():
+    the_list_of_all_urls = create_urls()
+    words, sentences = get_lists_of_words_and_sentences()
+    languages.remove(lg_from)
+    name_file = open('{}.txt'.format(word), 'w', encoding='utf-8')
+    n = len(the_list_of_all_urls)
+    for i in range(n):
+        if n == 1:
+            name_file.write("{} Translations:".format(lg_to.capitalize()) + '\n')
+            for j in range(1, 6):
+                name_file.write(words[i][j] + '\n')
+            name_file.write("{} Examples:".format(lg_to.capitalize()) + '\n')
+            for j in range(12):
+                name_file.write(sentences[i][j] + '\n')
+                if j % 2 != 0:
+                    name_file.write('\n')
+        else:
+            name_file.write("{} Translations:".format(languages[i].capitalize()) + '\n')
+            for k in range(1, 2):
+                name_file.write(words[i][k] + '\n')
 
-for i in range(n):
-    if n == 1:
-        name_file.write("{} Translations:".format(lg_to.capitalize()) + '\n')
-        for j in range(1, 6):
-            name_file.write(words[i][j] + '\n')
-        name_file.write("{} Examples:".format(lg_to.capitalize()) + '\n')
-        for j in range(12):
-            name_file.write(sentences[i][j] + '\n')
-            if j % 2 != 0:
-                name_file.write('\n')
+            name_file.write("{} Examples:".format(languages[i].capitalize()) + '\n')
+            for k in range(2):
+                name_file.write(sentences[i][k] + '\n')
+                if k % 2 != 0:
+                    name_file.write('\n')
+    name_file.close()
+
+
+if (lg_to not in languages) and (lg_to != 'all'):
+    print("Sorry, the program doesn't support {}".format(lg_to))
+elif lg_from not in languages:
+    print("Sorry, the program doesn't support {}".format(lg_from))
+else:
+    response = check_urls()
+    if response is True:
+        write_to_file()
+        f = open('{}.txt'.format(word), "r")
+        for x in f:
+            print(x)
+        f.close()
+    elif response == 404:
+        print("Sorry, unable to find {}".format(word))
     else:
-        name_file.write("{} Translations:".format(languages[i].capitalize()) + '\n')
-        for k in range(1, 2):
-            name_file.write(words[i][k] + '\n')
-
-        name_file.write("{} Examples:".format(languages[i].capitalize()) + '\n')
-        for k in range(2):
-            name_file.write(sentences[i][k] + '\n')
-            if k % 2 != 0:
-                name_file.write('\n')
-name_file.close()
-
-f = open('{}.txt'.format(word), "r")
-for x in f:
-    print(x)
-f.close()
+        print('Something wrong with your internet connection')
