@@ -1,36 +1,28 @@
 import requests
+import sys
 
 from bs4 import BeautifulSoup
 
-languages = {1: 'arabic', 2: 'german', 3: 'english', 4: 'spanish', 5: 'french', 6: 'hebrew', 7: 'japanese', 8: 'dutch', 9: 'polish', 10: 'portuguese', 11: 'romanian', 12: 'russian', 13: 'turkish'}
-
-lg_from = int(input("Hello, you're welcome to the translator. Translator supports:\n1. Arabic\n2. German\n3. English\n4. Spanish\n5. French\n6. Hebrew\n7. Japanese\n8. Dutch\n9. Polish\n10. Portuguese\n11. Romanian\n12. Russian\n13. Turkish\nType the number of your language:\n"))
-lg_to = int(input("Type the number of a language you want to translate to or '0' to translate to all languages:\n"))
-word = input('Type the word you want to translate: \n')
-
-
-def create_address(fr, t):
-    left = languages.get(fr)
-    right = languages.get(t)
-    address = 'https://context.reverso.net/translation/{}-{}/{}'.format(left, right, word)
-    return address
+args = sys.argv
+lg_from = args[1]
+lg_to = args[2]
+word = args[3]
+languages = ['arabic', 'german', 'english', 'spanish', 'french', 'hebrew', 'japanese', 'dutch', 'polish', 'portuguese', 'romanian', 'russian', 'turkish']
 
 
-def get_urls():
+def create_urls():
     list_of_urls = []
-    if lg_to == 0:
-        for i in range(1, 14):
-            if lg_from != i:
-                url = create_address(lg_from, i)
-                list_of_urls.append(url)
+    if lg_to == 'all':
+        for i in languages:
+            if i != lg_from:
+                list_of_urls.append('https://context.reverso.net/translation/{}-{}/{}'.format(lg_from, i, word))
     else:
-        url = create_address(lg_from, lg_to)
-        list_of_urls.append(url)
+        list_of_urls.append('https://context.reverso.net/translation/{}-{}/{}'.format(lg_from, lg_to, word))
     return list_of_urls
 
 
 def get_lists_of_words_and_sentences():
-    the_urls = get_urls()
+    the_urls = create_urls()
     multi_lists_words = []
     multi_lists_sentences = []
     for i in the_urls:
@@ -46,64 +38,45 @@ def get_lists_of_words_and_sentences():
 
         sentences = soup.find_all("div", {"class": "example"}, {"lang": "fr"})
         list_of_sentences = []
-        for i in sentences:
-            list_of_sentences.append(i.text.strip())
-        clean_sentences = []
-        for i in range(len(list_of_sentences)):
-            pair = []
-            the_line = list_of_sentences[i].split('\n')
-            for j in range(len(the_line)):
-                pair.append(the_line[j].strip())
-            clean_sentences.append(pair)
-        f = []
-        for i in range(len(list_of_sentences)):
-            p = []
-            for j in clean_sentences[i]:
+        for sentence in sentences:
+            the_line = sentence.text.strip().split('\n')
+            for j in the_line:
                 if j != ' ' and j != '' and j != '\n':
-                    p.append(j.strip())
-            f.append(p)
-        multi_lists_sentences.append(f)
+                    list_of_sentences.append(j.strip())
+        multi_lists_sentences.append(list_of_sentences)
+
     return multi_lists_words, multi_lists_sentences
 
 
-the_list_of_all_urls = get_urls()
-the_lists_of_all_words_and_sentences = get_lists_of_words_and_sentences()
 name_file = open('{}.txt'.format(word), 'w', encoding='utf-8')
-
+the_list_of_all_urls = create_urls()
+words, sentences = get_lists_of_words_and_sentences()
+languages.remove(lg_from)
 n = len(the_list_of_all_urls)
+
 for i in range(n):
     if n == 1:
-        print("{} Translations:".format(languages.get(lg_to).capitalize()))
-        name_file.write("{} Translations:".format(languages.get(lg_to).capitalize()) + '\n')
+        name_file.write("{} Translations:".format(lg_to.capitalize()) + '\n')
+        for j in range(1, 6):
+            name_file.write(words[i][j] + '\n')
+        name_file.write("{} Examples:".format(lg_to.capitalize()) + '\n')
+        for j in range(12):
+            name_file.write(sentences[i][j] + '\n')
+            if j % 2 != 0:
+                name_file.write('\n')
     else:
-        if i+1 < lg_from:
-            print("{} Translations:".format(languages.get(i+1).capitalize()))
-            name_file.write("{} Translations:".format(languages.get(i+1).capitalize()) + '\n')
-        elif i+1 >= lg_from:
-            print("{} Translations:".format(languages.get(i+2).capitalize()))
-            name_file.write("{} Translations:".format(languages.get(i+2).capitalize()) + '\n')
-    for j in range(1, 2):
-        print(the_lists_of_all_words_and_sentences[0][i][j])
-        name_file.write(the_lists_of_all_words_and_sentences[0][i][j] + '\n')
-    name_file.write('\n')
-    print()
+        name_file.write("{} Translations:".format(languages[i].capitalize()) + '\n')
+        for k in range(1, 2):
+            name_file.write(words[i][k] + '\n')
 
-    if n == 1:
-        print("{} Example:".format(languages.get(lg_to).capitalize()))
-        name_file.write("{} Example:".format(languages.get(lg_to).capitalize()) + '\n')
-    else:
-        if i+1 < lg_from:
-            print("{} Example:".format(languages.get(i+1).capitalize()))
-            name_file.write("{} Example:".format(languages.get(i+1).capitalize()) + '\n')
-        elif i+1 >= lg_from:
-            print("{} Example:".format(languages.get(i+2).capitalize()))
-            name_file.write("{} Example:".format(languages.get(i+2).capitalize()) + '\n')
-    for j in range(1, 2):
-        for k in the_lists_of_all_words_and_sentences[1][i][j]:
-            print(k)
-            name_file.write(k + '\n')
-        name_file.write('\n')
-        print()
-    name_file.write('\n')
-    print()
+        name_file.write("{} Examples:".format(languages[i].capitalize()) + '\n')
+        for k in range(2):
+            name_file.write(sentences[i][k] + '\n')
+            if k % 2 != 0:
+                name_file.write('\n')
 name_file.close()
+
+f = open('{}.txt'.format(word), "r")
+for x in f:
+    print(x)
+f.close()
